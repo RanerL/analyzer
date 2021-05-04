@@ -1,0 +1,81 @@
+CWE366_Race_Condition_Within_Thread__int_byref_12.c
+
+#####################
+_GOOD
+#####################
+
+Function "helperBad" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_12.c:24)
+Function "CWE366_Race_Condition_Within_Thread__int_byref_12_bad" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_12.c:55)
+Memory location gGoodLock@CWE366_Race_Condition_Within_Thread__int_byref_12.c:22 (race with conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:45 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:50 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:150 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_good} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:181 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_good} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_12.c:45 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_12.c:50 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_12.c:150 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_good} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_12.c:181 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_good} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:45 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:50 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:150 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_good} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:181 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_good} (conf. 110)
+
+Summary for all memory locations:
+	safe:            0
+	vulnerable:      1
+	unsafe:          0
+	-------------------
+	total:           1
+vars = 126    evals = 171  
+
+Timings:
+TOTAL                           0.106 s
+  parse                           0.013 s
+  convert to CIL                  0.010 s
+  analysis                        0.082 s
+    global_inits                    0.001 s
+    solving                         0.061 s
+      S.Dom.equal                     0.000 s
+    verify                          0.018 s
+Timing used
+Memory statistics: total=85.61MB, max=6.88MB, minor=83.79MB, major=6.00MB, promoted=4.17MB
+    minor collections=41  major collections=4 compactions=0
+
+#####################
+_BAD
+#####################
+
+Function "good1" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_12.c:121)
+Function "CWE366_Race_Condition_Within_Thread__int_byref_12_good" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_12.c:187)
+Memory location gGoodLock@CWE366_Race_Condition_Within_Thread__int_byref_12.c:22 (race with conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:45 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:50 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:110 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_bad} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_12.c:45 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_12.c:50 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_12.c:110 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_bad} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:45 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:50 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_12.c:110 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_12_bad} (conf. 110)
+
+Summary for all memory locations:
+	safe:            0
+	vulnerable:      1
+	unsafe:          0
+	-------------------
+	total:           1
+vars = 117    evals = 166  
+
+Timings:
+TOTAL                           0.101 s
+  parse                           0.015 s
+  convert to CIL                  0.009 s
+  analysis                        0.077 s
+    global_inits                    0.001 s
+    solving                         0.058 s
+      S.Dom.equal                     0.000 s
+    verify                          0.016 s
+Timing used
+Memory statistics: total=80.75MB, max=6.88MB, minor=78.92MB, major=5.95MB, promoted=4.12MB
+    minor collections=39  major collections=4 compactions=0
+

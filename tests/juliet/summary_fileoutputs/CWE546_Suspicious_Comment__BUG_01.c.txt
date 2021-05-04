@@ -1,0 +1,43 @@
+CWE546_Suspicious_Comment__BUG_01.c
+
+#####################
+_GOOD
+#####################
+
+Function "CWE546_Suspicious_Comment__BUG_01_bad" will never be called. (CWE546_Suspicious_Comment__BUG_01.c:20)
+vars = 8    evals = 6  
+
+Timings:
+TOTAL                           0.027 s
+  parse                           0.014 s
+  convert to CIL                  0.006 s
+  analysis                        0.007 s
+    global_inits                    0.001 s
+    solving                         0.001 s
+      S.Dom.equal                     0.000 s
+    verify                          0.000 s
+Timing used
+Memory statistics: total=24.35MB, max=6.36MB, minor=22.52MB, major=5.44MB, promoted=3.61MB
+    minor collections=11  major collections=2 compactions=0
+
+#####################
+_BAD
+#####################
+
+Function "good1" will never be called. (CWE546_Suspicious_Comment__BUG_01.c:33)
+Function "CWE546_Suspicious_Comment__BUG_01_good" will never be called. (CWE546_Suspicious_Comment__BUG_01.c:39)
+vars = 4    evals = 3  
+
+Timings:
+TOTAL                           0.020 s
+  parse                           0.010 s
+  convert to CIL                  0.008 s
+  analysis                        0.003 s
+    global_inits                    0.001 s
+    solving                         0.000 s
+      S.Dom.equal                     0.000 s
+    verify                          0.000 s
+Timing used
+Memory statistics: total=23.72MB, max=6.36MB, minor=21.89MB, major=5.44MB, promoted=3.61MB
+    minor collections=11  major collections=2 compactions=0
+

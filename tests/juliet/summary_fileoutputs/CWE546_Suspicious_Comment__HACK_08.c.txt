@@ -1,0 +1,45 @@
+CWE546_Suspicious_Comment__HACK_08.c
+
+#####################
+_GOOD
+#####################
+
+Function "CWE546_Suspicious_Comment__HACK_08_bad" will never be called. (CWE546_Suspicious_Comment__HACK_08.c:33)
+vars = 24    evals = 20  
+
+Timings:
+TOTAL                           0.028 s
+  parse                           0.009 s
+  convert to CIL                  0.007 s
+  analysis                        0.012 s
+    global_inits                    0.001 s
+    solving                         0.004 s
+      S.Dom.equal                     0.000 s
+    verify                          0.002 s
+Timing used
+Memory statistics: total=28.74MB, max=6.36MB, minor=26.92MB, major=5.49MB, promoted=3.67MB
+    minor collections=14  major collections=3 compactions=0
+
+#####################
+_BAD
+#####################
+
+Function "staticReturnsFalse" will never be called. (CWE546_Suspicious_Comment__HACK_08.c:26)
+Function "good1" will never be called. (CWE546_Suspicious_Comment__HACK_08.c:50)
+Function "good2" will never be called. (CWE546_Suspicious_Comment__HACK_08.c:65)
+Function "CWE546_Suspicious_Comment__HACK_08_good" will never be called. (CWE546_Suspicious_Comment__HACK_08.c:74)
+vars = 9    evals = 7  
+
+Timings:
+TOTAL                           0.032 s
+  parse                           0.015 s
+  convert to CIL                  0.008 s
+  analysis                        0.010 s
+    global_inits                    0.001 s
+    solving                         0.001 s
+      S.Dom.equal                     0.000 s
+    verify                          0.001 s
+Timing used
+Memory statistics: total=25.54MB, max=6.36MB, minor=23.72MB, major=5.47MB, promoted=3.65MB
+    minor collections=12  major collections=2 compactions=0
+

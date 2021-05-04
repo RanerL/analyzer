@@ -1,0 +1,69 @@
+CWE366_Race_Condition_Within_Thread__int_byref_08.c
+
+#####################
+_GOOD
+#####################
+
+Function "helperBad" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_08.c:24)
+Function "CWE366_Race_Condition_Within_Thread__int_byref_08_bad" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_08.c:68)
+Memory location gGoodLock@CWE366_Race_Condition_Within_Thread__int_byref_08.c:22 (race with conf. 90)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:45 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:50 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:137 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:173 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_08.c:45 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_08.c:50 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_08.c:137 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_08.c:173 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:153 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 90)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_08.c:153 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 90)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:45 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:50 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:137 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_08.c:173 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_08_good} (conf. 110)
+
+Summary for all memory locations:
+	safe:            0
+	vulnerable:      1
+	unsafe:          0
+	-------------------
+	total:           1
+vars = 142    evals = 250  
+
+Timings:
+TOTAL                           0.139 s
+  parse                           0.018 s
+  convert to CIL                  0.014 s
+  analysis                        0.108 s
+    global_inits                    0.001 s
+    solving                         0.084 s
+      S.Dom.equal                     0.000 s
+    verify                          0.020 s
+Timing used
+Memory statistics: total=97.10MB, max=6.88MB, minor=95.27MB, major=6.03MB, promoted=4.20MB
+    minor collections=47  major collections=4 compactions=0
+
+#####################
+_BAD
+#####################
+
+Function "helperGood" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_08.c:38)
+Function "staticReturnsFalse" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_08.c:61)
+Function "good1" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_08.c:103)
+Function "good2" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_08.c:144)
+Function "CWE366_Race_Condition_Within_Thread__int_byref_08_good" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_08.c:179)
+vars = 72    evals = 84  
+
+Timings:
+TOTAL                           0.065 s
+  parse                           0.015 s
+  convert to CIL                  0.009 s
+  analysis                        0.042 s
+    global_inits                    0.001 s
+    solving                         0.031 s
+      S.Dom.equal                     0.000 s
+    verify                          0.007 s
+Timing used
+Memory statistics: total=49.38MB, max=6.88MB, minor=47.55MB, major=5.76MB, promoted=3.94MB
+    minor collections=24  major collections=4 compactions=0
+

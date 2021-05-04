@@ -1,0 +1,70 @@
+CWE366_Race_Condition_Within_Thread__int_byref_05.c
+
+#####################
+_GOOD
+#####################
+
+Function "helperBad" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_05.c:24)
+Function "CWE366_Race_Condition_Within_Thread__int_byref_05_bad" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_05.c:61)
+Memory location staticTrue@CWE366_Race_Condition_Within_Thread__int_byref_05.c:56 (safe)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:139 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 110)
+Memory location gGoodLock@CWE366_Race_Condition_Within_Thread__int_byref_05.c:22 (race with conf. 90)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:45 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:50 with {} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:130 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:166 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_05.c:45 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_05.c:50 with {} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_05.c:130 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 50)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_05.c:166 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 50)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:146 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 90)
+  write@CWE366_Race_Condition_Within_Thread__int_byref_05.c:146 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 90)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:45 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:50 with {} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:130 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 110)
+  read@CWE366_Race_Condition_Within_Thread__int_byref_05.c:166 with {thread:CWE366_Race_Condition_Within_Thread__int_byref_05_good} (conf. 110)
+
+Summary for all memory locations:
+	safe:            1
+	vulnerable:      1
+	unsafe:          0
+	-------------------
+	total:           2
+vars = 134    evals = 246  
+
+Timings:
+TOTAL                           0.109 s
+  parse                           0.011 s
+  convert to CIL                  0.009 s
+  analysis                        0.088 s
+    global_inits                    0.000 s
+    solving                         0.074 s
+      S.Dom.equal                     0.000 s
+    verify                          0.014 s
+Timing used
+Memory statistics: total=95.53MB, max=6.36MB, minor=93.70MB, major=6.02MB, promoted=4.19MB
+    minor collections=46  major collections=4 compactions=0
+
+#####################
+_BAD
+#####################
+
+Function "helperGood" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_05.c:38)
+Function "good1" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_05.c:96)
+Function "good2" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_05.c:137)
+Function "CWE366_Race_Condition_Within_Thread__int_byref_05_good" will never be called. (CWE366_Race_Condition_Within_Thread__int_byref_05.c:172)
+vars = 69    evals = 81  
+
+Timings:
+TOTAL                           0.065 s
+  parse                           0.014 s
+  convert to CIL                  0.009 s
+  analysis                        0.041 s
+    global_inits                    0.001 s
+    solving                         0.031 s
+      S.Dom.equal                     0.000 s
+    verify                          0.007 s
+Timing used
+Memory statistics: total=48.28MB, max=6.36MB, minor=46.46MB, major=5.76MB, promoted=3.93MB
+    minor collections=24  major collections=4 compactions=0
+
