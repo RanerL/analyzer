@@ -65,11 +65,11 @@ struct
     let module WResult = Witness.Result (Cfg) (Spec) (EQSys) (LHT) (GHT) in
 
     (* print out information about dead code *)
-    let print_dead_code (xs:Result.t) =
+    let print_dead_code (xs:Result.t) uncalled_fn_loc =
       let dead_locations : unit Deadcode.Locmap.t = Deadcode.Locmap.create 10 in
       let module NH = Hashtbl.Make (MyCFG.Node) in
       let live_nodes : unit NH.t = NH.create 10 in
-      let count = ref 0 in
+      let count = ref 0 in (* Is only populated if "dbg.print_dead_code" is true *)
       let module StringMap = BatMap.Make (String) in
       let open BatPrintf in
       let live_lines = ref StringMap.empty in
@@ -123,11 +123,12 @@ struct
         if StringMap.is_empty !dead_lines
         then printf "No lines with dead code found by solver (there might still be dead code removed by CIL).\n" (* TODO https://github.com/goblint/analyzer/issues/94 *)
         else (
-          StringMap.iter print_file !dead_lines;
-          printf "Found dead code on %d line%s!\n" !count (if !count>1 then "s" else "")
-        )
+          StringMap.iter print_file !dead_lines; (* populates count by side-effect *)
+          let total_dead = !count + uncalled_fn_loc in
+          printf "Found dead code on %d line%s%s!\n" total_dead (if total_dead>1 then "s" else "") (if uncalled_fn_loc > 0 then Printf.sprintf " (including %d in uncalled functions)" uncalled_fn_loc else "")
+        );
+        printf "Total lines (logical LoC): %d\n" (live_count + !count + uncalled_fn_loc); (* We can only give total LoC if we counted dead code *)
       );
-      printf "Total lines (logical LoC): %d\n" (live_count + !count);
       let str = function true -> "then" | false -> "else" in
       let report tv (loc, dead) =
         if Deadcode.Locmap.mem dead_locations loc then
@@ -176,7 +177,7 @@ struct
     let make_global_fast_xml f g =
       let open Printf in
       let print_globals k v =
-        fprintf f "\n<glob><key>%s</key>%a</glob>" (Goblintutil.escape (Basetype.Variables.short 800 k)) Spec.G.printXml v;
+        fprintf f "\n<glob><key>%s</key>%a</glob>" (XmlUtil.escape (Basetype.Variables.show k)) Spec.G.printXml v;
       in
       GHT.iter print_globals g
     in
@@ -214,7 +215,7 @@ struct
     (* analyze cil's global-inits function to get a starting state *)
     let do_global_inits (file: file) : Spec.D.t * fundec list =
       let ctx =
-        { ask     = (fun _ -> Queries.Result.top ())
+        { ask     = (fun (type a) (q: a Queries.t) -> Queries.Result.top q)
         ; emit   = (fun _ -> failwith "Cannot \"emit\" in global initializer context.")
         ; node    = MyCFG.dummy_node
         ; prev_node = MyCFG.dummy_node
@@ -304,7 +305,7 @@ struct
     let enter_with st fd =
       let st = st fd.svar in
       let ctx =
-        { ask     = (fun _ -> Queries.Result.top ())
+        { ask     = (fun (type a) (q: a Queries.t) -> Queries.Result.top q)
         ; emit   = (fun _ -> failwith "Cannot \"emit\" in enter_with context.")
         ; node    = MyCFG.dummy_node
         ; prev_node = MyCFG.dummy_node
@@ -339,7 +340,7 @@ struct
     let exitvars = List.map (enter_with Spec.exitstate) exitfuns in
     let otherstate st v =
       let ctx =
-        { ask     = (fun _ -> Queries.Result.top ())
+        { ask     = (fun (type a) (q: a Queries.t) -> Queries.Result.top q)
         ; emit   = (fun _ -> failwith "Cannot \"emit\" in otherstate context.")
         ; node    = MyCFG.dummy_node
         ; prev_node = MyCFG.dummy_node
@@ -378,6 +379,8 @@ struct
     let entrystates = List.map (fun (n,e) -> (MyCFG.FunctionEntry n, Spec.context e), e) startvars in
     let entrystates_global = GHT.to_list gh in
 
+    let uncalled_dead = ref 0 in
+
     let solve_and_postprocess () =
       (* handle save_run/load_run *)
       let append_opt opt file = let o = get_string opt in if o = "" then "" else o ^ Filename.dir_sep ^ file in
@@ -407,27 +410,29 @@ struct
           | _ -> failwith "Currently only two runs can be compared!";
         ) else (
           if get_bool "dbg.verbose" then
-            print_endline ("Solving the constraint system with " ^ get_string "solver" ^ ". Show stats with ctrl+c, quit with ctrl+\\.");
-          if get_bool "dbg.earlywarn" then Goblintutil.should_warn := true;
+            print_endline ("Solving the constraint system with " ^ get_string "solver" ^ ". Solver statistics are shown every " ^ string_of_int (get_int "dbg.solver-stats-interval") ^ "s or by signal " ^ get_string "dbg.solver-signal" ^ ".");
+          if get_string "warn" = "early" then Goblintutil.should_warn := true;
           let lh, gh = Stats.time "solving" (Slvr.solve entrystates entrystates_global) startvars' in
           if save_run <> "" then (
             let analyses = append_opt "save_run" "analyses.marshalled" in
             let config = append_opt "save_run" "config.json" in
             let meta = append_opt "save_run" "meta.json" in
+            let solver_stats = append_opt "save_run" "solver_stats.csv" in (* see Generic.SolverStats... *)
             if get_bool "dbg.verbose" then (
-              print_endline ("Saving the solver result to " ^ save_run ^ ", the analysis table to " ^ analyses ^ ", the current configuration to " ^ config ^ " and meta-data about this run to " ^ meta);
+              print_endline ("Saving the solver result to " ^ save_run ^ ", the analysis table to " ^ analyses ^ ", the current configuration to " ^ config ^ ", meta-data about this run to " ^ meta ^ ", and solver statistics to " ^ solver_stats);
             );
             ignore @@ GU.create_dir (get_string "save_run"); (* ensure the directory exists *)
             Serialize.marshal (lh, gh) save_run;
             Serialize.marshal !MCP.analyses_table analyses;
             GobConfig.write_file config;
             let module Meta = struct
-                type t = { command : string; timestamp : float; localtime : string } [@@deriving to_yojson]
-                let json = to_yojson { command = GU.command; timestamp = Unix.time (); localtime = localtime () }
+                type t = { command : string; version: string; timestamp : float; localtime : string } [@@deriving to_yojson]
+                let json = to_yojson { command = GU.command; version = Version.goblint; timestamp = Unix.time (); localtime = localtime () }
               end
             in
             (* Yojson.Safe.to_file meta Meta.json; *)
-            Yojson.Safe.pretty_to_channel (Stdlib.open_out meta) Meta.json (* the above is compact, this is pretty-printed *)
+            Yojson.Safe.pretty_to_channel (Stdlib.open_out meta) Meta.json; (* the above is compact, this is pretty-printed *)
+            Goblintutil.(self_signal (signal_of_string (get_string "dbg.solver-signal"))); (* write solver_stats after solving (otherwise no rows if faster than dbg.solver-stats-interval). TODO better way to write solver_stats without terminal output? *)
           );
           lh, gh
         )
@@ -442,9 +447,9 @@ struct
         compare_with (Slvr.choose_solver (get_string "comparesolver"))
       );
 
-      if get_bool "verify" && compare_runs = [] then (
-        if (get_bool "dbg.verbose") then print_endline "Verifying the result.";
-        Goblintutil.should_warn := true;
+      if (get_bool "verify" || get_string "warn" <> "never") && compare_runs = [] then (
+        if (get_bool "verify" && get_bool "dbg.verbose") then print_endline "Verifying the result.";
+        Goblintutil.should_warn := get_string "warn" <> "never";
         Stats.time "verify" (Vrfyr.verify lh) gh;
       );
 
@@ -454,28 +459,30 @@ struct
         Stats.time "reachability" (Reach.prune lh gh) startvars'
       );
 
-      if get_bool "dbg.uncalled" then (
-        let out = M.get_out "uncalled" Legacy.stdout in
-        let insrt k _ s = match k with
-          | (MyCFG.Function fn,_) -> if not (get_bool "exp.forward") then Set.Int.add fn.vid s else s
-          | (MyCFG.FunctionEntry fn,_) -> if (get_bool "exp.forward") then Set.Int.add fn.vid s else s
-          | _ -> s
-        in
-        (* set of ids of called functions *)
-        let calledFuns = LHT.fold insrt lh Set.Int.empty in
-        let is_bad_uncalled fn loc =
-          not (Set.Int.mem fn.vid calledFuns) &&
-          not (Str.last_chars loc.file 2 = ".h") &&
-          not (LibraryFunctions.is_safe_uncalled fn.vname)
-        in
-        let print_uncalled = function
-          | GFun (fn, loc) when is_bad_uncalled fn.svar loc->
-              let msg = "Function \"" ^ fn.svar.vname ^ "\" will never be called." in
+      let out = M.get_out "uncalled" Legacy.stdout in
+      let insrt k _ s = match k with
+        | (MyCFG.Function fn,_) -> if not (get_bool "exp.forward") then Set.Int.add fn.vid s else s
+        | (MyCFG.FunctionEntry fn,_) -> if (get_bool "exp.forward") then Set.Int.add fn.vid s else s
+        | _ -> s
+      in
+      (* set of ids of called functions *)
+      let calledFuns = LHT.fold insrt lh Set.Int.empty in
+      let is_bad_uncalled fn loc =
+        not (Set.Int.mem fn.vid calledFuns) &&
+        not (Str.last_chars loc.file 2 = ".h") &&
+        not (LibraryFunctions.is_safe_uncalled fn.vname)
+      in
+      let print_and_calculate_uncalled = function
+        | GFun (fn, loc) when is_bad_uncalled fn.svar loc->
+            let cnt = Cilfacade.countLoc fn in
+            uncalled_dead := !uncalled_dead + cnt;
+            if get_bool "dbg.uncalled" then (
+              let msg = "Function \"" ^ fn.svar.vname ^ "\" will never be called: " ^ string_of_int cnt  ^ "LoC" in
               ignore (Pretty.fprintf out "%s (%a)\n" msg Basetype.ProgLines.pretty loc)
-          | _ -> ()
-        in
-        List.iter print_uncalled file.globals
-      );
+            )
+        | _ -> ()
+      in
+      List.iter print_and_calculate_uncalled file.globals;
 
       (* check for dead code at the last state: *)
       let main_sol = try LHT.find lh (List.hd startvars') with Not_found -> Spec.D.bot () in
@@ -502,7 +509,7 @@ struct
         let ask loc =
           (* build a ctx for using the query system *)
           let rec ctx =
-            { ask    = query
+            { ask    = (fun (type a) (q: a Queries.t) -> Spec.query ctx q)
             ; emit   = (fun _ -> failwith "Cannot \"emit\" in query context.")
             ; node   = MyCFG.dummy_node (* TODO maybe ask should take a node (which could be used here) instead of a location *)
             ; prev_node = MyCFG.dummy_node
@@ -518,9 +525,10 @@ struct
             ; sideg  = (fun v g    -> failwith "Cannot \"split\" in query context.")
             ; assign = (fun ?name _ -> failwith "Cannot \"assign\" in query context.")
             }
-          and query x = Spec.query ctx x in
+          in
           Spec.query ctx
         in
+        let ask loc = { Queries.f = fun (type a) (q: a Queries.t) -> ask loc q } in
         List.iter (fun name -> Transform.run name ask file) active_transformations
       );
 
@@ -530,13 +538,21 @@ struct
     MyCFG.write_cfgs := MyCFG.dead_code_cfg file (module Cfg:CfgBidir);
 
     (* Use "normal" constraint solving *)
-    let lh, gh = Goblintutil.timeout solve_and_postprocess () (float_of_int (get_int "dbg.timeout"))
-      (fun () -> M.print_msg "Timeout reached!" (!Tracing.current_loc); raise GU.Timeout) in
+    let timeout_reached () =
+      M.print_msg "Timeout reached!" (!Tracing.current_loc);
+      (* let module S = Generic.SolverStats (EQSys) (LHT) in *)
+      (* Can't call Generic.SolverStats...print_stats :(
+         print_stats is triggered by dbg.solver-signal, so we send that signal to ourself in maingoblint before re-raising Timeout.
+         The alternative would be to catch the below Timeout, print_stats and re-raise in each solver (or include it in some functor above them). *)
+      raise GU.Timeout
+    in
+    let timeout = get_string "dbg.timeout" |> Goblintutil.seconds_of_duration_string in
+    let lh, gh = Goblintutil.timeout solve_and_postprocess () (float_of_int timeout) timeout_reached in
     let local_xml = solver2source_result lh in
 
     let liveness =
       if get_bool "dbg.print_dead_code" then
-        print_dead_code local_xml
+        print_dead_code local_xml !uncalled_dead
       else
         fun _ -> true (* TODO: warn about conflicting options *)
     in
