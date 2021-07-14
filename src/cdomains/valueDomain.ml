@@ -90,7 +90,7 @@ struct
     | `Blob of Blobs.t
     | `List of Lists.t
     | `Bot
-  ] [@@deriving eq, ord, to_yojson]
+  ] [@@deriving eq, ord]
 
   let is_mutex_type (t: typ): bool = match t with
   | TNamed (info, attr) -> info.tname = "pthread_mutex_t" || info.tname = "spinlock_t"
@@ -699,11 +699,11 @@ struct
           | Some (v') ->
             begin
               (* This should mean the entire expression we have here is a pointer into the array *)
-              if Cil.isArrayType (Cil.typeOf (Lval v')) then
+              if Cil.isArrayType (Cilfacade.typeOfLval v') then
                 let expr = ptr in
                 let start_of_array = StartOf v' in
-                let start_type = typeSigWithoutArraylen (Cil.typeOf start_of_array) in
-                let expr_type = typeSigWithoutArraylen (Cil.typeOf ptr) in
+                let start_type = typeSigWithoutArraylen (Cilfacade.typeOf start_of_array) in
+                let expr_type = typeSigWithoutArraylen (Cilfacade.typeOf ptr) in
                 (* Comparing types for structural equality is incorrect here, use typeSig *)
                 (* as explained at https://people.eecs.berkeley.edu/~necula/cil/api/Cil.html#TYPEtyp *)
                 if start_type = expr_type then
@@ -991,6 +991,17 @@ struct
     | `List n ->  Lists.printXml f n
     | `Bot -> BatPrintf.fprintf f "<value>\n<data>\nbottom\n</data>\n</value>\n"
     | `Top -> BatPrintf.fprintf f "<value>\n<data>\ntop\n</data>\n</value>\n"
+
+  let to_yojson = function
+    | `Int n -> ID.to_yojson n
+    | `Address n -> AD.to_yojson n
+    | `Struct n -> Structs.to_yojson n
+    | `Union n -> Unions.to_yojson n
+    | `Array n -> CArrays.to_yojson n
+    | `Blob n -> Blobs.to_yojson n
+    | `List n -> Lists.to_yojson n
+    | `Bot -> `String "⊥"
+    | `Top -> `String "⊤"
 
   let invariant c = function
     | `Int n -> ID.invariant c n
